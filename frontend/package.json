@@ -1,0 +1,12 @@
+{
+  "name": "local-chat",
+  "version": "1.0.0",
+  "description": "Local Chat",
+  "scripts": {
+    "build": "tailwindcss -i ./assets/css/tailwind.src.css -o ./assets/css/tailwind.min.css --minify",
+    "watch": "tailwindcss -i ./assets/css/tailwind.src.css -o ./assets/css/tailwind.min.css --watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0"
+  }
+}

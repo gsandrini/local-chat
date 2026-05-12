@@ -1,0 +1,13 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "local-chat",
+  "outputfilename": "local-chat",
+  "frontend:install": "npm install",
+  "frontend:build": "npm run build",
+  "frontend:dev:watcher": "npm run watch",
+  "frontend:dev:serverUrl": "",
+  "author": {
+    "name": "gsandrini",
+    "email": "giuseppe.sandrini@gmail.com"
+  }
+}

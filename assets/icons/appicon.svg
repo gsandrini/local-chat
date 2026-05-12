@@ -1,0 +1,15 @@
+<svg width="100%" viewBox="0 0 680 680" xmlns="http://www.w3.org/2000/svg" role="img">
+  <title>Speech bubble round app icon</title>
+  <desc>App icon with round speech bubble and three dots on dark rounded square background</desc>
+
+  <rect x="0" y="0" width="680" height="680" rx="120" fill="#4a4a4a"/>
+
+  <polygon points="210,455 178,535 295,460" fill="#4a4a4a"/>
+  <polygon points="210,455 178,535 295,460" fill="none" stroke="#f0ece3" stroke-width="42" stroke-linejoin="round" stroke-linecap="round"/>
+
+  <circle cx="340" cy="295" r="200" fill="#4a4a4a" stroke="#f0ece3" stroke-width="42"/>
+
+  <circle cx="245" cy="295" r="28" fill="#f0ece3"/>
+  <circle cx="340" cy="295" r="28" fill="#f0ece3"/>
+  <circle cx="435" cy="295" r="28" fill="#f0ece3"/>
+</svg>
