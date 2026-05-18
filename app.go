@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,11 +16,13 @@ import (
 
 // App struct
 type App struct {
-	ctx        context.Context
-	ollamaCmd  *exec.Cmd
-	cancelChat context.CancelFunc
-	history    []Message
-	lang       string
+	ctx              context.Context
+	db               *sql.DB
+	ollamaCmd        *exec.Cmd
+	cancelChat       context.CancelFunc
+	history          []Message
+	currentSessionID int64
+	lang             string
 }
 
 // translations holds all UI strings per language
@@ -93,6 +96,13 @@ func NewApp() *App {
 // startup is called when the app starts
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+
+	db, err := initDB()
+	if err != nil {
+		fmt.Println("Warning: could not initialise history DB:", err)
+		return
+	}
+	a.db = db
 }
 
 // OllamaModel represents a model returned by the Ollama API
@@ -343,6 +353,11 @@ func (a *App) Chat(model, prompt string) ChatResult {
 
 	wailsRuntime.EventsEmit(a.ctx, "chat:history", a.history)
 	wailsRuntime.EventsEmit(a.ctx, "chat:done", "")
+	if a.db != nil {
+		if err := a.saveSession(model); err != nil {
+			fmt.Println("Warning: could not save session:", err)
+		}
+	}
 
 	return ChatResult{
 		Success: true,

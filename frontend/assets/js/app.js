@@ -22,6 +22,15 @@ const TRANSLATIONS = {
         footerBy: '(Anthropic)',
         ollamaIsSystemd: 'Ollama è gestito da systemd — usa il terminale per avviarlo/fermarlo',
         newChat: 'Nuova chat',
+        noSessions: 'Nessuna chat salvata',
+        sidebarTitle: 'Chats',
+        sidebarHide: 'Nascondi',
+        sidebarShow: 'Mostra',
+        deleteSession: 'Cancella',
+        renameSession: 'Rinomina',
+        renameModalTitle: 'Rinomina chat',
+        btnCancel: 'Annulla',
+        btnSave: 'Salva',
     },
     en: {
         appTitle: 'LocalChat',
@@ -43,6 +52,15 @@ const TRANSLATIONS = {
         footerBy: '(Anthropic)',
         ollamaIsSystemd: 'Ollama is managed by systemd — stop/start from terminal',
         newChat: 'New chat',
+        noSessions: 'No saved chats',
+        sidebarTitle: 'Chats',
+        sidebarHide: 'Hide',
+        sidebarShow: 'Show',
+        deleteSession: 'Delete',
+        renameSession: 'Rename',
+        renameModalTitle: 'Rename chat',
+        btnCancel: 'Cancel',
+        btnSave: 'Save',
     },
 };
 
@@ -52,7 +70,6 @@ function LocalChat() {
         models: [],
         selectedModel: '',
         prompt: '',
-        output: '',
         loading: false,
         error: null,
         ollamaOnline: false,
@@ -60,6 +77,12 @@ function LocalChat() {
         ollamaLoading: false,
         ollamaModelLoading: false,
         history: [],
+
+        // history sidebar
+        sessions: [],
+        activeSessionId: null,
+        sidebarOpen: true,
+        renameModal: { open: false, id: null, title: '' },
 
         // i18n
         lang: navigator.language.startsWith('it') ? 'it' : 'en',
@@ -87,14 +110,22 @@ function LocalChat() {
                     });
                 });
 
-                window.runtime.EventsOn('chat:done', () => {
+                window.runtime.EventsOn('chat:done', async () => {
                     this.loading = false;
+                    this.sessions = await window.go.main.App.GetSessions();
+                    // Update the activeSessionId with the newly created/updated session
+                    if (this.sessions.length > 0 && this.activeSessionId === null) {
+                        this.activeSessionId = this.sessions[0].id;
+                    }
                 });
 
                 window.runtime.EventsOn('chat:history', (history) => {
                     this.history = history;
                 });
             }
+
+            // Load session list on startup
+            this.sessions = await window.go.main.App.GetSessions();
         },
 
         async checkStatus() {
@@ -119,10 +150,11 @@ function LocalChat() {
                 }
             } catch (e) {
                 this.models = [];
+                this.error = String(e);
             } finally {
                 setTimeout(() => {
                     this.ollamaModelLoading = false;
-                }, 600); // the duration must be equal to the animation                                        
+                }, 600); // the duration must be equal to the animation
             }
         },
 
@@ -205,8 +237,68 @@ function LocalChat() {
                 return;
             }
             this.history = [];
-            await window.go.main.App.ClearHistory();
+            this.activeSessionId = null;
+            await window.go.main.App.NewSession();
             this.loading = false;
+        },
+
+        // Session management
+
+        async loadSession(id) {
+            if (!window.go?.main?.App) {
+                return;
+            }
+            try {
+                const messages = await window.go.main.App.LoadSession(id);
+                this.history = messages || [];
+                this.activeSessionId = id;
+                this.$nextTick(() => {
+                    const el = this.$refs.history;
+                    if (el) el.scrollTop = el.scrollHeight;
+                });
+            } catch (e) {
+                this.error = String(e);
+            }
+        },
+
+        async deleteSession(id) {
+            if (!window.go?.main?.App) return;
+            try {
+                await window.go.main.App.DeleteSession(id);
+                this.sessions = this.sessions.filter(s => s.id !== id);
+                if (this.activeSessionId === id) {
+                    this.history = [];
+                    this.activeSessionId = null;
+                }
+            } catch (e) {
+                this.error = String(e);
+            }
+        },
+
+        openRenameModal(session) {
+            this.renameModal = { open: true, id: session.id, title: session.title };
+            this.$nextTick(() => {
+                const el = this.$refs.renameInput;
+                if (el) { el.focus(); el.select(); }
+            });
+        },
+
+        closeRenameModal() {
+            this.renameModal = { open: false, id: null, title: '' };
+        },
+
+        async saveRename() {
+            const { id, title } = this.renameModal;
+            if (!title.trim() || !window.go?.main?.App) return;
+            try {
+                await window.go.main.App.RenameSession(id, title.trim());
+                const session = this.sessions.find(s => s.id === id);
+                if (session) session.title = title.trim();
+            } catch (e) {
+                this.error = String(e);
+            } finally {
+                this.closeRenameModal();
+            }
         },
 
         handleKeydown(event) {
@@ -216,8 +308,8 @@ function LocalChat() {
             }
         },
 
-        closeError(event) {
+        closeError() {
             this.error = null;
-        }
+        },
     };
 }

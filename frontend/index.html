@@ -49,105 +49,176 @@
           </svg>
           <span x-text="t.btnStopOllama"></span>
         </button>
-        <button @click="newChat()" class="btn-new-chat" style="white-space:nowrap">
-          <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
-            <path
-              d="M12 4a1.5 1.5 0 0 1 1.5 1.5v5h5a1.5 1.5 0 0 1 0 3h-5v5a1.5 1.5 0 0 1-3 0v-5h-5a1.5 1.5 0 0 1 0-3h5v-5A1.5 1.5 0 0 1 12 4Z" />
-          </svg>
-          <span x-text="t.newChat"></span>
-        </button>
       </div>
     </div>
     <div x-show="ollamaIsSystemd" class="flex justify-center mb-2 text-xs text-warning">
       <span x-text="t.ollamaIsSystemd"></span>
     </div>
-    <!-- Main card -->
-    <div class="card mt-2">
-      <div class="card-inner">
-        <!-- Model selector -->
-        <div class="shrink-0">
-          <label class="mb-1 label" x-text="t.labelModel"></label>
-          <div class="flex gap-2">
-            <select x-model="selectedModel" :disabled="loading || !ollamaOnline || models.length === 0"
-              class="field-select">
-              <template x-if="!ollamaOnline">
-                <option value="" x-text="t.modelStartOllama"></option>
-              </template>
-              <template x-if="ollamaOnline && models.length === 0">
-                <option value="" x-text="t.modelNoneFound"></option>
-              </template>
-              <template x-for="m in models" :key="m">
-                <option :value="m" x-text="m"></option>
-              </template>
-            </select>
-            <button class="btn-load-models" @click="loadModels()">
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24"
-                :class="{'spinner': ollamaModelLoading }" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
-                <path d="M21 3v5h-5" />
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
-                <path d="M8 16H3v5" />
-              </svg>
-            </button>
-          </div>
+    <!-- Icon rail + sessions panel + card -->
+    <div class="flex gap-0 flex-1 min-h-0">
+
+      <!-- Icon rail (always visible) -->
+      <div class="icon-rail">
+        <!-- Toggle sidebar -->
+        <button @click="sidebarOpen = !sidebarOpen" class="icon-rail-btn"
+          :title="sidebarOpen ? t.sidebarHide : t.sidebarShow">
+          <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+            stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <path d="M9 3v18" />
+          </svg>
+        </button>
+        <!-- New chat -->
+        <button @click="newChat()" class="icon-rail-btn" :title="t.newChat">
+          <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+            <path
+              d="M12 4a1.5 1.5 0 0 1 1.5 1.5v5h5a1.5 1.5 0 0 1 0 3h-5v5a1.5 1.5 0 0 1-3 0v-5h-5a1.5 1.5 0 0 1 0-3h5v-5A1.5 1.5 0 0 1 12 4Z" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Sessions panel (collapsible) -->
+      <aside x-show="sidebarOpen" class="sidebar">
+        <!-- Title -->
+        <div class="sidebar-header">
+          <span class="sidebar-title" x-text="t.sidebarTitle"></span>
         </div>
-        <!-- History -->
-        <div x-show="history.length > 0" x-ref="history" class="history-scroll p-3 space-y-3 rounded-lg">
-          <template x-for="(msg, index) in history" :key="index">
-            <div class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
-              <div class="max-w-[75%] rounded-lg px-4 py-3 text-sm border"
-                :class="msg.role === 'user' ? 'message-user' : 'message-assistant'">
-                <div class="break-words whitespace-pre-wrap" x-text="msg.content"></div>
-              </div>
+        <!-- Session list -->
+        <div class="sidebar-list">
+          <template x-for="s in sessions" :key="s.id">
+            <div class="session-item"
+              :class="activeSessionId === s.id ? 'session-item-active' : 'session-item-inactive'"
+              @click="loadSession(s.id)">
+              <span class="truncate flex-1 leading-snug" x-text="s.title"></span>              
+              <!-- Rename button -->
+              <button @click.stop="openRenameModal(s)" class="session-action-btn" :title="t.renameSession">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5Z" />
+                </svg>
+              </button>
+              <!-- Delete button -->
+              <button @click.stop="deleteSession(s.id)" class="session-action-btn session-action-btn-delete" :title="t.deleteSession">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 6h18" />
+                  <path d="M8 6V4h8v2" />
+                  <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>              
+              </button>
             </div>
           </template>
+          <!-- Placeholder -->
+          <div x-show="sessions.length === 0" class="session-empty" x-text="t.noSessions">
+          </div>
         </div>
-        <!-- Prompt -->
-        <div class="shrink-0">
-          <label class="mb-1 label">
-            <span x-text="t.labelPrompt"></span>
-            <span class="tracking-normal normal-case" style="font-size:10px; color:var(--color-muted); opacity:.7"
-              x-text="t.promptHint"></span>
-          </label>
-          <textarea x-model="prompt" :disabled="loading || !ollamaOnline" @keydown="handleKeydown($event)"
-            :placeholder="t.promptPlaceholder" class="field-textarea" rows="3"></textarea>
+      </aside>
+
+      <!-- Rename modal -->
+      <div x-show="renameModal.open" class="modal-overlay" @click.self="closeRenameModal()">
+        <div class="modal">
+          <h2 class="modal-title" x-text="t.renameModalTitle"></h2>
+          <input x-model="renameModal.title" @keydown.enter="saveRename()" @keydown.escape="closeRenameModal()"
+            class="modal-input" type="text" x-ref="renameInput" />
+          <div class="modal-actions">
+            <button @click="closeRenameModal()" class="btn-modal-cancel" x-text="t.btnCancel"></button>
+            <button @click="saveRename()" class="btn-modal-save" x-text="t.btnSave"></button>
+          </div>
         </div>
-        <!-- Send / Stop -->
-        <div class="flex gap-2 shrink-0">
-          <button @click="send()" :disabled="loading || !ollamaOnline || !selectedModel || !prompt.trim()"
-            class="justify-center w-full btn-send">
-            <svg x-show="loading" class="w-4 h-4 spinner" fill="none" stroke="currentColor" stroke-width="2.5"
-              viewBox="0 0 24 24">
-              <path stroke-linecap="round" d="M12 2a10 10 0 0 1 10 10" />
-            </svg>
-            <svg x-show="!loading" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-              stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-            <span x-text="loading ? t.btnSending : t.btnSend"></span>
-          </button>
-          <button :disabled="!loading" @click="stopChat()" class="btn-stop-chat" style="white-space:nowrap">
-            <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
-              <rect x="4" y="4" width="16" height="16" rx="2" />
-            </svg>
-            <span x-text="t.btnStopChat"></span>
-          </button>
-        </div>
-        <!-- Error -->
-        <div x-show="error" class="alert-error shrink-0">
-          <button @click="closeError()">
-            <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>        
-          <span x-text="error"></span>
-        </div>
-        <!-- Footer -->
-        <div class="flex items-center justify-center gap-1 shrink-0" style="font-size:11px">
-          <span x-text="t.footerMadeWith"></span>
-          <a href="https://claude.ai" target="_blank" rel="noopener" class="footer-link">Claude</a>
-          <span x-text="t.footerBy"></span>
+      </div>
+
+      <!-- Card -->
+      <div class="card flex-1" :class="sidebarOpen ? 'ml-3' : 'ml-2'">
+        <div class="card-inner">
+          <!-- Model selector -->
+          <div class="shrink-0">
+            <label class="mb-1 label" x-text="t.labelModel"></label>
+            <div class="flex gap-2">
+              <select x-model="selectedModel" :disabled="loading || !ollamaOnline || models.length === 0"
+                class="field-select">
+                <template x-if="!ollamaOnline">
+                  <option value="" x-text="t.modelStartOllama"></option>
+                </template>
+                <template x-if="ollamaOnline && models.length === 0">
+                  <option value="" x-text="t.modelNoneFound"></option>
+                </template>
+                <template x-for="m in models" :key="m">
+                  <option :value="m" x-text="m"></option>
+                </template>
+              </select>
+              <button class="btn-load-models" @click="loadModels()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" viewBox="0 0 24 24"
+                  :class="{'spinner': ollamaModelLoading }" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+                  <path d="M21 3v5h-5" />
+                  <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+                  <path d="M8 16H3v5" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <!-- History -->
+          <div x-show="history.length > 0" x-ref="history" class="history-scroll p-3 space-y-3 rounded-lg">
+            <template x-for="(msg, index) in history" :key="index">
+              <div class="flex" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+                <div class="max-w-[75%] rounded-lg px-4 py-3 text-sm border"
+                  :class="msg.role === 'user' ? 'message-user' : 'message-assistant'">
+                  <div class="break-words whitespace-pre-wrap" x-text="msg.content"></div>
+                </div>
+              </div>
+            </template>
+          </div>
+          <!-- Prompt -->
+          <div class="shrink-0">
+            <label class="mb-1 label">
+              <span x-text="t.labelPrompt"></span>
+              <span class="tracking-normal normal-case" style="font-size:10px; color:var(--color-muted); opacity:.7"
+                x-text="t.promptHint"></span>
+            </label>
+            <textarea x-model="prompt" :disabled="loading || !ollamaOnline" @keydown="handleKeydown($event)"
+              :placeholder="t.promptPlaceholder" class="field-textarea" rows="3"></textarea>
+          </div>
+          <!-- Send / Stop -->
+          <div class="flex gap-2 shrink-0">
+            <button @click="send()" :disabled="loading || !ollamaOnline || !selectedModel || !prompt.trim()"
+              class="justify-center w-full btn-send">
+              <svg x-show="loading" class="w-4 h-4 spinner" fill="none" stroke="currentColor" stroke-width="2.5"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" d="M12 2a10 10 0 0 1 10 10" />
+              </svg>
+              <svg x-show="!loading" width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M12 5l7 7-7 7" />
+              </svg>
+              <span x-text="loading ? t.btnSending : t.btnSend"></span>
+            </button>
+            <button :disabled="!loading" @click="stopChat()" class="btn-stop-chat" style="white-space:nowrap">
+              <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                <rect x="4" y="4" width="16" height="16" rx="2" />
+              </svg>
+              <span x-text="t.btnStopChat"></span>
+            </button>
+          </div>
+          <!-- Error -->
+          <div x-show="error" class="alert-error shrink-0">
+            <button @click="closeError()">
+              <svg class="w-4 h-4 shrink-0 mt-0.5" fill="none" stroke="currentColor" stroke-width="2"
+                viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            <span x-text="error"></span>
+          </div>
+          <!-- Footer -->
+          <div class="flex items-center justify-center gap-1 shrink-0" style="font-size:11px">
+            <span x-text="t.footerMadeWith"></span>
+            <a href="https://claude.ai" target="_blank" rel="noopener" class="footer-link">Claude</a>
+            <span x-text="t.footerBy"></span>
+          </div>
         </div>
       </div>
     </div>

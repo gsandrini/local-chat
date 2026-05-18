@@ -58,7 +58,8 @@
     box-sizing: border-box;
 }
 
-html, body {
+html,
+body {
     height: 100%;
     margin: 0;
 }
@@ -68,7 +69,7 @@ body {
     font-size: 13px;
     background-color: var(--color-bg);
     color: var(--color-text);
-    overflow: hidden;    
+    overflow: hidden;
     display: flex;
     flex-direction: column;
 }
@@ -381,6 +382,216 @@ body {
 
 .footer-link:hover {
     opacity: 1;
+}
+
+/* ICON RAIL */
+
+.icon-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0;
+    width: 36px;
+    flex-shrink: 0;
+}
+
+.icon-rail-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 0.375rem;
+    border: none;
+    background-color: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.icon-rail-btn:hover {
+    background-color: var(--color-hover-bg);
+    color: var(--color-text);
+}
+
+/* SIDEBAR */
+
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    width: 168px;
+    padding-right: 0.5rem;
+}
+
+.sidebar-header {
+    padding: 0.25rem 0.5rem 0.375rem;
+}
+
+.sidebar-title {
+    font-size: 0.625rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-muted);
+}
+
+.sidebar-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    overflow-y: auto;
+    flex: 1;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-border) transparent;
+}
+
+.session-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.375rem 0.5rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+    font-size: 11px;
+}
+
+.session-item-active {
+    background-color: var(--color-hover-bg);
+    color: var(--color-text);
+}
+
+.session-item-inactive {
+    color: var(--color-muted);
+}
+
+.session-item-inactive:hover {
+    background-color: var(--color-hover-bg);
+    color: var(--color-text);
+}
+
+.session-action-btn {
+    margin-left: 0.125rem;
+    flex-shrink: 0;
+    opacity: 0;
+    color: var(--color-muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s, color 0.15s;
+    font-size: 10px;
+    padding: 0 1px;
+    display: flex;
+    align-items: center;
+}
+
+.session-item:hover .session-action-btn {
+    opacity: 1;
+}
+
+.session-action-btn:hover {
+    color: var(--color-text);
+}
+
+.session-action-btn-delete:hover {
+    color: var(--color-red);
+}
+
+/* MODAL */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+}
+
+.modal {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    width: 22rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+}
+
+.modal-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.modal-input {
+    width: 100%;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-border-focus);
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    outline: none;
+}
+
+.modal-input:focus {
+    border-color: var(--color-send-bg);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+}
+
+.btn-modal-cancel {
+    background-color: transparent;
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    height: 2rem;
+    padding: 0 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.btn-modal-cancel:hover {
+    background-color: var(--color-hover-bg);
+}
+
+.btn-modal-save {
+    background-color: var(--color-send-bg);
+    color: #ffffff;
+    border: none;
+    border-radius: 0.5rem;
+    height: 2rem;
+    padding: 0 1rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.btn-modal-save:hover {
+    background-color: var(--color-send-hover);
+}
+
+.session-empty {
+    padding: 0.375rem 0.5rem;
+    color: var(--color-muted);
+    opacity: 0.5;
+    font-size: 10px;
 }
 
 /*  ANIMATIONS  */

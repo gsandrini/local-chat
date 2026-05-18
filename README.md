@@ -8,27 +8,21 @@ Just pick a model, ask your question, and get a streaming response in real time.
 
 ## Screenshot
 
-### App
+### App overview
 
-App overview
+Main application interface.
 
 ![image](./assets/screenshot/local-chat.png)
 
-### Response
+### Rename chat
 
-LLM response example
+Rename an existing conversation from the chat menu.
 
-![image](./assets/screenshot/local-chat-response.png)
-
-### Ollama self managed
-
-Start / Stop buttons are shown to manage Ollama
-
-![image](./assets/screenshot/local-chat-ollama-self-managed.png)
+![image](./assets/screenshot/local-chat-rename-chat.png)
 
 ### Ollama managed by Systemd
 
-Ollama startup is managed by the system
+Ollama startup and lifecycle managed by the system service.
 
 ![image](./assets/screenshot/local-chat-ollama-managed-by-systemd.png)
 
@@ -42,7 +36,9 @@ Ollama startup is managed by the system
 - Simple interface: model selector, prompt input, output box
 - Visual feedback during generation with loading indicator
 - Checks Ollama status on startup and disables controls when offline
-
+- Persistent chat history stored locally via SQLite
+- Rename and delete saved sessions from the sidebar
+- Collapsible sidebar to maximize chat space
 ---
 
 ## Requirements
@@ -69,7 +65,7 @@ ollama pull phi4-mini
 ollama pull qwen2.5-coder:7b
 ```
 
-### Disable systemctl
+### Disable systemctl (Optional)
 
 Disable the systemd service to allow the app to manage Ollama directly
 
