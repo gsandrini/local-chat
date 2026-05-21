@@ -31,6 +31,9 @@ const TRANSLATIONS = {
         renameModalTitle: 'Rinomina chat',
         btnCancel: 'Annulla',
         btnSave: 'Salva',
+        attachFile: 'Allega file di contesto (.txt, .md)',
+        removeFile: 'Rimuovi file di contesto',
+        fileContext: 'Contesto attivo',
     },
     en: {
         appTitle: 'LocalChat',
@@ -61,6 +64,9 @@ const TRANSLATIONS = {
         renameModalTitle: 'Rename chat',
         btnCancel: 'Cancel',
         btnSave: 'Save',
+        attachFile: 'Attach context file (.txt, .md)',
+        removeFile: 'Remove context file',
+        fileContext: 'Active context',
     },
 };
 
@@ -77,6 +83,9 @@ function LocalChat() {
         ollamaLoading: false,
         ollamaModelLoading: false,
         history: [],
+
+        // file context
+        fileContextName: '',
 
         // history sidebar
         sessions: [],
@@ -113,7 +122,6 @@ function LocalChat() {
                 window.runtime.EventsOn('chat:done', async () => {
                     this.loading = false;
                     this.sessions = await window.go.main.App.GetSessions();
-                    // Update the activeSessionId with the newly created/updated session
                     if (this.sessions.length > 0 && this.activeSessionId === null) {
                         this.activeSessionId = this.sessions[0].id;
                     }
@@ -124,8 +132,9 @@ function LocalChat() {
                 });
             }
 
-            // Load session list on startup
+            // Load session list and current file context on startup
             this.sessions = await window.go.main.App.GetSessions();
+            this.fileContextName = await window.go.main.App.GetFileContext();
         },
 
         async checkStatus() {
@@ -154,7 +163,7 @@ function LocalChat() {
             } finally {
                 setTimeout(() => {
                     this.ollamaModelLoading = false;
-                }, 600); // the duration must be equal to the animation
+                }, 600);
             }
         },
 
@@ -238,12 +247,37 @@ function LocalChat() {
             }
             this.history = [];
             this.activeSessionId = null;
+            this.fileContextName = '';
             await window.go.main.App.NewSession();
             this.loading = false;
         },
 
-        // Session management
+        // File context
+        async attachFile() {
+            if (!window.go?.main?.App) return;
+            try {
+                const res = await window.go.main.App.OpenFileContext();
+                if (res.success) {
+                    this.fileContextName = res.file_name;
+                } else if (res.message) {
+                    this.error = res.message;
+                }
+            } catch (e) {
+                this.error = String(e);
+            }
+        },
 
+        async removeFileContext() {
+            if (!window.go?.main?.App) return;
+            try {
+                await window.go.main.App.ClearFileContext();
+                this.fileContextName = '';
+            } catch (e) {
+                this.error = String(e);
+            }
+        },
+
+        // Session management
         async loadSession(id) {
             if (!window.go?.main?.App) {
                 return;
@@ -252,6 +286,8 @@ function LocalChat() {
                 const messages = await window.go.main.App.LoadSession(id);
                 this.history = messages || [];
                 this.activeSessionId = id;
+                // Restore file context name for this session
+                this.fileContextName = await window.go.main.App.GetFileContext();
                 this.$nextTick(() => {
                     const el = this.$refs.history;
                     if (el) el.scrollTop = el.scrollHeight;
@@ -269,6 +305,7 @@ function LocalChat() {
                 if (this.activeSessionId === id) {
                     this.history = [];
                     this.activeSessionId = null;
+                    this.fileContextName = '';
                 }
             } catch (e) {
                 this.error = String(e);

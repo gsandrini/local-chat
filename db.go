@@ -13,10 +13,11 @@ import (
 
 // Session represents a saved chat session
 type Session struct {
-	ID        int64  `json:"id"`
-	Title     string `json:"title"`
-	Model     string `json:"model"`
-	CreatedAt string `json:"created_at"`
+	ID             int64  `json:"id"`
+	Title          string `json:"title"`
+	Model          string `json:"model"`
+	CreatedAt      string `json:"created_at"`
+	SystemFileName string `json:"system_file_name"`
 }
 
 // initDB opens (or creates) the SQLite database and runs migrations
@@ -55,14 +56,14 @@ func appDataDir() (string, error) {
 	return filepath.Join(base, "local-chat"), nil
 }
 
-// migrate creates the tables if they do not exist yet
+// migrate creates the tables if they do not exist yet and applies incremental migrations
 func migrate(db *sql.DB) error {
 	_, err := db.Exec(`
 		CREATE TABLE IF NOT EXISTS sessions (
-			id         INTEGER PRIMARY KEY AUTOINCREMENT,
-			title      TEXT    NOT NULL,
-			model      TEXT    NOT NULL DEFAULT '',
-			created_at TEXT    NOT NULL
+			id               INTEGER PRIMARY KEY AUTOINCREMENT,
+			title            TEXT    NOT NULL,
+			model            TEXT    NOT NULL DEFAULT '',
+			created_at       TEXT    NOT NULL
 		);
 
 		CREATE TABLE IF NOT EXISTS messages (
@@ -75,7 +76,25 @@ func migrate(db *sql.DB) error {
 
 		CREATE INDEX IF NOT EXISTS idx_messages_session ON messages(session_id);
 	`)
-	return err
+	if err != nil {
+		return err
+	}
+
+	// Incremental migration: add system_prompt and system_file_name columns if missing
+	for _, col := range []struct{ name, def string }{
+		{"system_prompt", "TEXT NOT NULL DEFAULT ''"},
+		{"system_file_name", "TEXT NOT NULL DEFAULT ''"},
+	} {
+		var dummy string
+		err := db.QueryRow(`SELECT ` + col.name + ` FROM sessions LIMIT 1`).Scan(&dummy)
+		if err != nil && strings.Contains(err.Error(), "no such column") {
+			if _, err2 := db.Exec(`ALTER TABLE sessions ADD COLUMN ` + col.name + ` ` + col.def); err2 != nil {
+				return err2
+			}
+		}
+	}
+
+	return nil
 }
 
 // --- Methods exposed to Wails / frontend ---
@@ -83,7 +102,7 @@ func migrate(db *sql.DB) error {
 // GetSessions returns all sessions ordered by most recent first
 func (a *App) GetSessions() ([]Session, error) {
 	rows, err := a.db.Query(
-		`SELECT id, title, model, created_at FROM sessions ORDER BY id DESC`,
+		`SELECT id, title, model, created_at, system_file_name FROM sessions ORDER BY id DESC`,
 	)
 	if err != nil {
 		return nil, err
@@ -93,7 +112,7 @@ func (a *App) GetSessions() ([]Session, error) {
 	var sessions []Session
 	for rows.Next() {
 		var s Session
-		if err := rows.Scan(&s.ID, &s.Title, &s.Model, &s.CreatedAt); err != nil {
+		if err := rows.Scan(&s.ID, &s.Title, &s.Model, &s.CreatedAt, &s.SystemFileName); err != nil {
 			return nil, err
 		}
 		sessions = append(sessions, s)
@@ -102,8 +121,19 @@ func (a *App) GetSessions() ([]Session, error) {
 }
 
 // LoadSession loads all messages of a session into the in-memory history
-// and returns them to the frontend
+// and returns them to the frontend; also restores the system prompt
 func (a *App) LoadSession(sessionID int64) ([]Message, error) {
+	// Restore system prompt and file name for this session
+	var systemPrompt, systemFileName string
+	err := a.db.QueryRow(
+		`SELECT system_prompt, system_file_name FROM sessions WHERE id = ?`, sessionID,
+	).Scan(&systemPrompt, &systemFileName)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, err
+	}
+	a.systemPrompt = systemPrompt
+	a.systemFileName = systemFileName
+
 	rows, err := a.db.Query(
 		`SELECT role, content FROM messages WHERE session_id = ? ORDER BY id ASC`,
 		sessionID,
@@ -139,6 +169,8 @@ func (a *App) DeleteSession(sessionID int64) error {
 	if a.currentSessionID == sessionID {
 		a.currentSessionID = 0
 		a.history = []Message{}
+		a.systemPrompt = ""
+		a.systemFileName = ""
 	}
 	return nil
 }
@@ -148,6 +180,8 @@ func (a *App) DeleteSession(sessionID int64) error {
 func (a *App) NewSession() {
 	a.history = []Message{}
 	a.currentSessionID = 0
+	a.systemPrompt = ""
+	a.systemFileName = ""
 }
 
 // RenameSession updates the title of a session
@@ -174,8 +208,8 @@ func (a *App) saveSession(model string) error {
 		}
 
 		res, err := a.db.Exec(
-			`INSERT INTO sessions (title, model, created_at) VALUES (?, ?, ?)`,
-			title, model, now,
+			`INSERT INTO sessions (title, model, created_at, system_prompt, system_file_name) VALUES (?, ?, ?, ?, ?)`,
+			title, model, now, a.systemPrompt, a.systemFileName,
 		)
 		if err != nil {
 			return err
@@ -185,10 +219,17 @@ func (a *App) saveSession(model string) error {
 			return err
 		}
 		a.currentSessionID = id
+	} else {
+		// Update system prompt/file name in case they changed during the session
+		if _, err := a.db.Exec(
+			`UPDATE sessions SET system_prompt = ?, system_file_name = ? WHERE id = ?`,
+			a.systemPrompt, a.systemFileName, a.currentSessionID,
+		); err != nil {
+			return err
+		}
 	}
 
 	// Delete existing messages for this session and rewrite them.
-	// Simple and safe for the message volumes we expect.
 	if _, err := a.db.Exec(
 		`DELETE FROM messages WHERE session_id = ?`, a.currentSessionID,
 	); err != nil {

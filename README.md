@@ -14,12 +14,6 @@ Main application interface.
 
 ![image](./assets/screenshot/local-chat.png)
 
-### Rename chat
-
-Rename an existing conversation from the chat menu.
-
-![image](./assets/screenshot/local-chat-rename-chat.png)
-
 ### Ollama managed by Systemd
 
 Ollama startup and lifecycle managed by the system service.
@@ -39,6 +33,9 @@ Ollama startup and lifecycle managed by the system service.
 - Persistent chat history stored locally via SQLite
 - Rename and delete saved sessions from the sidebar
 - Collapsible sidebar to maximize chat space
+- Attach a `.txt` or `.md` file as context for the entire conversation
+- File context persists across sessions and is restored when reopening a chat
+- Active file shown in a status bar below the chat with a one-click remove option
 ---
 
 ## Requirements
@@ -96,6 +93,7 @@ curl -fsSL https://github.com/gsandrini/local-chat/releases/latest/download/inst
 
 - [Wails](https://wails.io) - Desktop framework (Go + WebView)
 - [Go](https://golang.org) - Backend logic
+- [SQLite](https://www.sqlite.org) - Embedded database ([go-sqlite3](https://github.com/mattn/go-sqlite3))
 - [Alpine.js](https://alpinejs.dev) - Reactive UI (bundled locally)
 - [Tailwind CSS](https://tailwindcss.com) - Styling (compiled locally)
 - [JetBrains Mono](https://www.jetbrains.com/lp/mono/) - Typography

@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -23,6 +25,8 @@ type App struct {
 	history          []Message
 	currentSessionID int64
 	lang             string
+	systemPrompt     string
+	systemFileName   string
 }
 
 // translations holds all UI strings per language
@@ -119,6 +123,13 @@ type OllamaListResponse struct {
 type ChatResult struct {
 	Success bool   `json:"success"`
 	Message string `json:"message"`
+}
+
+// FileContextResult is returned after loading a file as system prompt
+type FileContextResult struct {
+	Success  bool   `json:"success"`
+	FileName string `json:"file_name"`
+	Message  string `json:"message"`
 }
 
 // Messages
@@ -231,6 +242,61 @@ func (a *App) GetModels() ([]string, error) {
 	return names, nil
 }
 
+// OpenFileContext opens a native file picker and sets the chosen .txt/.md as system prompt
+func (a *App) OpenFileContext() FileContextResult {
+	path, err := wailsRuntime.OpenFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
+		Title: "Apri file di contesto",
+		Filters: []wailsRuntime.FileFilter{
+			{DisplayName: "Testo (*.txt, *.md)", Pattern: "*.txt;*.md"},
+		},
+	})
+
+	if err != nil {
+		return FileContextResult{Success: false, Message: err.Error()}
+	}
+	if path == "" {
+		return FileContextResult{Success: false, Message: ""}
+	}
+
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return FileContextResult{Success: false, Message: err.Error()}
+	}
+
+	a.systemPrompt = string(data)
+	a.systemFileName = filepath.Base(path)
+
+	if a.db != nil && a.currentSessionID != 0 {
+		_, _ = a.db.Exec(
+			`UPDATE sessions SET system_prompt = ?, system_file_name = ? WHERE id = ?`,
+			a.systemPrompt, a.systemFileName, a.currentSessionID,
+		)
+	}
+
+	return FileContextResult{
+		Success:  true,
+		FileName: a.systemFileName,
+	}
+}
+
+// ClearFileContext removes the current system prompt / file context
+func (a *App) ClearFileContext() {
+	a.systemPrompt = ""
+	a.systemFileName = ""
+
+	if a.db != nil && a.currentSessionID != 0 {
+		_, _ = a.db.Exec(
+			`UPDATE sessions SET system_prompt = '', system_file_name = '' WHERE id = ?`,
+			a.currentSessionID,
+		)
+	}
+}
+
+// GetFileContext returns the current file name (empty string if none)
+func (a *App) GetFileContext() string {
+	return a.systemFileName
+}
+
 type ollamaChatRequest struct {
 	Model    string    `json:"model"`
 	Messages []Message `json:"messages"`
@@ -280,9 +346,32 @@ func (a *App) Chat(model, prompt string) ChatResult {
 		a.cancelChat = nil
 	}()
 
+
+	// Build messages: inject file context as explicit user+assistant exchange
+	// before the conversation history, so every model understands the document.
+	messages := make([]Message, 0, len(a.history)+3)
+	if strings.TrimSpace(a.systemPrompt) != "" {
+		// 1. System instruction
+        messages = append(messages, Message{
+            Role:    "system",
+            Content: "You are a helpful assistant. The user has provided the content of a text file as reference. Use this information to answer their questions.",
+        })
+        // 2. Fake user message that presents the file explicitly
+        messages = append(messages, Message{
+            Role:    "user",
+            Content: fmt.Sprintf("Here is the content of the file \"%s\":\n\n%s", a.systemFileName, a.systemPrompt),
+        })
+        // 3. Fake assistant acknowledgement
+        messages = append(messages, Message{
+            Role:    "assistant",
+            Content: fmt.Sprintf("I have received the content of the file \"%s\". I am ready to answer your questions about it.", a.systemFileName),
+        })
+	}
+	messages = append(messages, a.history...)
+
 	reqData := ollamaChatRequest{
 		Model:    model,
-		Messages: a.history,
+		Messages: messages,
 		Stream:   true,
 	}
 

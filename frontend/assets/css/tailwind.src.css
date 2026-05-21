@@ -6,10 +6,10 @@
 :root {
     --color-bg: #f7f7f5;
     --color-surface: #ffffff;
-    --color-border: rgba(0, 0, 0, 0.10);
-    --color-border-focus: rgba(0, 0, 0, 0.30);
+    --color-border: rgba(0, 0, 0, 0.14);
+    --color-border-focus: rgba(0, 0, 0, 0.36);
     --color-text: #0f0f0f;
-    --color-muted: #6b6b68;
+    --color-muted: #555552;
     --color-hover-bg: rgba(0, 0, 0, 0.05);
     --color-red: #df6262;
     --color-green: #38a169;
@@ -18,11 +18,16 @@
     --color-tag-text: #0f0f0f;
     --color-msg-user-bg: #cde8d8;
     --color-msg-user-text: #1f3d2a;
-    --color-msg-assistant-bg: #f4f6f4;
-    --color-msg-assistant-text: #374151;
-    --color-msg-assistant-border: rgba(0, 0, 0, 0.08);
+    --color-msg-assistant-bg: #eaece9;
+    --color-msg-assistant-text: #1f2937;
+    --color-msg-assistant-border: rgba(0, 0, 0, 0.12);
     --color-send-bg: #4a9b7f;
     --color-send-hover: #3a7d66;
+    --color-file-accent: #6b6b68;
+    --color-file-accent-bg: rgba(0, 0, 0, 0.06);
+    --color-remove-hover-bg: rgba(223, 98, 98, 0.08);
+    --color-modal-overlay: rgba(0, 0, 0, 0.4);
+    --color-shadow-modal: rgba(0, 0, 0, 0.18);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -32,7 +37,7 @@
         --color-border: rgba(255, 255, 255, 0.10);
         --color-border-focus: rgba(255, 255, 255, 0.30);
         --color-text: #f7f7f5;
-        --color-muted: #6b6b68;
+        --color-muted: #8a8a86;
         --color-hover-bg: rgba(255, 255, 255, 0.08);
         --color-red: #fc8181;
         --color-green: #68d391;
@@ -41,11 +46,16 @@
         --color-tag-text: #f7f7f5;
         --color-msg-user-bg: #2d4a38;
         --color-msg-user-text: #d4eddd;
-        --color-msg-assistant-bg: rgba(255, 255, 255, 0.07);
+        --color-msg-assistant-bg: rgba(255, 255, 255, 0.11);
         --color-msg-assistant-text: #e5e7eb;
-        --color-msg-assistant-border: rgba(255, 255, 255, 0.10);
+        --color-msg-assistant-border: rgba(255, 255, 255, 0.16);
         --color-send-bg: #3d8a6e;
         --color-send-hover: #2f6d57;
+        --color-file-accent: #6b6b68;
+        --color-file-accent-bg: rgba(255, 255, 255, 0.08);
+        --color-remove-hover-bg: rgba(252, 129, 129, 0.12);
+        --color-modal-overlay: rgba(0, 0, 0, 0.6);
+        --color-shadow-modal: rgba(0, 0, 0, 0.3);
     }
 }
 
@@ -92,9 +102,6 @@ body {
 
 /*  CARD  */
 .card {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 0.75rem;
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -111,7 +118,14 @@ body {
     gap: 0.75rem;
 }
 
-/*  LABEL  */
+/*  INPUT SECTION SEPARATOR  */
+.card-inner > .shrink-0:nth-child(3) {
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--color-border);
+    margin-top: 0.25rem;
+}
+
+
 .label {
     display: block;
     font-size: 0.625rem;
@@ -124,7 +138,7 @@ body {
 .field-textarea,
 .field-select {
     width: 100%;
-    background-color: var(--color-bg);
+    background-color: var(--color-surface);
     color: var(--color-text);
     border: 1px solid var(--color-border);
     border-radius: 0.5rem;
@@ -504,7 +518,7 @@ body {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.4);
+    background-color: var(--color-modal-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -520,7 +534,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.18);
+    box-shadow: 0 8px 32px var(--color-shadow-modal);
 }
 
 .modal-title {
@@ -625,4 +639,86 @@ body {
 
 .spinner {
     animation: spin 0.8s linear infinite;
+}
+
+/* File Context Bar */
+.file-context-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: var(--color-file-accent-bg);
+    border: 1px solid var(--color-border);
+    font-size: 12px;
+    color: var(--color-muted);
+}
+
+.file-context-bar .file-icon {
+    color: var(--color-muted);
+    flex-shrink: 0;
+}
+
+.file-context-bar .file-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--color-text);
+    font-weight: 500;
+}
+
+.btn-remove-file {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+    border-radius: 4px;
+    color: var(--color-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.15s, background 0.15s;
+}
+
+.btn-remove-file:hover {
+    color: var(--color-red);
+    background: var(--color-remove-hover-bg);
+}
+
+.btn-attach-file {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    color: var(--color-muted);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+    white-space: nowrap;
+}
+
+.btn-attach-file:hover:not(:disabled) {
+    color: var(--color-text);
+    border-color: var(--color-border-focus);
+    background: var(--color-hover-bg);
+}
+
+.btn-attach-file:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* badge on sidebar sessions that have a file context */
+.session-has-file {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 4px;
+    color: var(--color-muted);
+    opacity: 0.8;
+    flex-shrink: 0;
 }
