@@ -17,6 +17,9 @@ jobs:
           - name: local-chat-linux
             platform: linux/amd64
             os: ubuntu-latest
+          - name: local-chat-windows
+            platform: windows/amd64
+            os: windows-latest
 
     runs-on: ${{ matrix.build.os }}
 
@@ -52,6 +55,10 @@ jobs:
       - name: Build (Linux)
         if: matrix.build.os == 'ubuntu-latest'
         run: wails build -platform ${{ matrix.build.platform }} -clean -tags webkit2_41
+
+      - name: Build (Windows)
+        if: matrix.build.os == 'windows-latest'
+        run: wails build -platform ${{ matrix.build.platform }} -clean
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"runtime"
 
 	wailsRuntime "github.com/wailsapp/wails/v2/pkg/runtime"
 )
@@ -151,11 +152,14 @@ func (a *App) OllamaStatus() bool {
 
 // Check if Ollama is started by Systemd
 func (a *App) OllamaIsSystemd() bool {
-	out, err := exec.Command("systemctl", "is-active", "ollama").Output()
-	if err != nil {
-		return false
-	}
-	return strings.TrimSpace(string(out)) == "active"
+    if runtime.GOOS == "windows" {
+        return false
+    }
+    out, err := exec.Command("systemctl", "is-active", "ollama").Output()
+    if err != nil {
+        return false
+    }
+    return strings.TrimSpace(string(out)) == "active"
 }
 
 // OllamaStart starts `ollama serve` as a background process
@@ -170,6 +174,10 @@ func (a *App) OllamaStart() ChatResult {
 	}
 
 	cmd := exec.Command(path, "serve")
+
+    // Hide the Terminal window on Windows
+    setSysProcAttr(cmd)
+
 	if err := cmd.Start(); err != nil {
 		return ChatResult{Success: false, Message: a.t("ollamaStartFailed") + err.Error()}
 	}
@@ -203,22 +211,27 @@ func (a *App) OllamaStart() ChatResult {
 
 // OllamaStop stops Ollama using pkill
 func (a *App) OllamaStop() ChatResult {
-	if !a.OllamaStatus() {
-		return ChatResult{Success: true, Message: a.t("ollamaNotRunning")}
-	}
+    if !a.OllamaStatus() {
+        return ChatResult{Success: true, Message: a.t("ollamaNotRunning")}
+    }
 
-	if a.ollamaCmd != nil && a.ollamaCmd.Process != nil {
-		_ = a.ollamaCmd.Process.Kill()
-		a.ollamaCmd = nil
-	}
+    if a.ollamaCmd != nil && a.ollamaCmd.Process != nil {
+        _ = a.ollamaCmd.Process.Kill()
+        a.ollamaCmd = nil
+    }
 
-	_ = exec.Command("pkill", "-f", "ollama serve").Run()
+    // Fallback: termina il processo per nome
+    if runtime.GOOS == "windows" {
+        _ = exec.Command("taskkill", "/F", "/IM", "ollama.exe").Run()
+    } else {
+        _ = exec.Command("pkill", "-f", "ollama serve").Run()
+    }
 
-	time.Sleep(600 * time.Millisecond)
-	if a.OllamaStatus() {
-		return ChatResult{Success: false, Message: a.t("ollamaStillActive")}
-	}
-	return ChatResult{Success: true, Message: a.t("ollamaStopped")}
+    time.Sleep(600 * time.Millisecond)
+    if a.OllamaStatus() {
+        return ChatResult{Success: false, Message: a.t("ollamaStillActive")}
+    }
+    return ChatResult{Success: true, Message: a.t("ollamaStopped")}
 }
 
 // GetModels returns the list of locally available Ollama models
