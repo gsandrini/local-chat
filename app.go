@@ -49,6 +49,8 @@ var translations = map[string]map[string]string{
 		"requestError":         "Errore creazione richiesta: ",
 		"connectionError":      "Errore connessione Ollama: ",
 		"responseError":        "Errore lettura risposta: ",
+		"openContextFile":      "Apri file di contesto",
+		"textFiles":            "Testo (*.txt, *.md)",
 	},
 	"en": {
 		"ollamaAlreadyRunning": "Ollama is already running.",
@@ -67,6 +69,8 @@ var translations = map[string]map[string]string{
 		"requestError":         "Request error: ",
 		"connectionError":      "Ollama connection error: ",
 		"responseError":        "Response read error: ",
+		"openContextFile":      "Open context file",
+		"textFiles":            "Text (*.txt, *.md)",
 	},
 }
 
@@ -258,9 +262,9 @@ func (a *App) GetModels() ([]string, error) {
 // OpenFileContext opens a native file picker and sets the chosen .txt/.md as system prompt
 func (a *App) OpenFileContext() FileContextResult {
 	path, err := wailsRuntime.OpenFileDialog(a.ctx, wailsRuntime.OpenDialogOptions{
-		Title: "Apri file di contesto",
+		Title: a.t("openContextFile"),
 		Filters: []wailsRuntime.FileFilter{
-			{DisplayName: "Testo (*.txt, *.md)", Pattern: "*.txt;*.md"},
+			{DisplayName: a.t("textFiles"), Pattern: "*.txt;*.md"},
 		},
 	})
 

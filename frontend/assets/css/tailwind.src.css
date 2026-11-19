@@ -2,70 +2,368 @@
 @tailwind components;
 @tailwind utilities;
 
-/*  THEME TOKENS  */
+/* ==========================================================================
+   SHARED DESIGN SYSTEM
+   Identical in date-utils, dummy-text, connection-manager and local-chat.
+   Change it in all four apps or in none. App-specific CSS goes below it.
+   ========================================================================== */
+
+/* TOKENS */
+
 :root {
-    --color-bg: #f7f7f5;
+    color-scheme: light;
+
+    /* Palette */
+    --color-bg: #f7f7f4;
     --color-surface: #ffffff;
-    --color-border: rgba(0, 0, 0, 0.14);
-    --color-border-focus: rgba(0, 0, 0, 0.36);
-    --color-text: #0f0f0f;
-    --color-muted: #555552;
+    --color-border: #dde1e6;
+    --color-border-focus: #91a7c7;
+    --color-text: #20252c;
+    --color-muted: #667085;
     --color-hover-bg: rgba(0, 0, 0, 0.05);
-    --color-red: #df6262;
-    --color-green: #38a169;
-    --color-yellow: #b8722a;
     --color-tag-bg: rgba(0, 0, 0, 0.06);
-    --color-tag-text: #0f0f0f;
-    --color-msg-user-bg: #cde8d8;
-    --color-msg-user-text: #1f3d2a;
-    --color-msg-assistant-bg: #eaece9;
-    --color-msg-assistant-text: #1f2937;
-    --color-msg-assistant-border: rgba(0, 0, 0, 0.12);
-    --color-send-bg: #4a9b7f;
-    --color-send-hover: #3a7d66;
-    --color-file-accent: #6b6b68;
-    --color-file-accent-bg: rgba(0, 0, 0, 0.06);
-    --color-remove-hover-bg: rgba(223, 98, 98, 0.08);
-    --color-modal-overlay: rgba(0, 0, 0, 0.4);
-    --color-shadow-modal: rgba(0, 0, 0, 0.18);
+    --color-inverse-bg: #0f0f0f;
+    --color-inverse-text: #f7f7f5;
+    --color-primary: #2563eb;
+    --color-primary-hover: #1d4ed8;
+    --color-primary-text: #ffffff;
+    --color-danger: #e53e3e;
+    --color-danger-hover: #c53030;
+    --color-danger-bg: rgba(229, 62, 62, 0.08);
+    --color-success: #38a169;
+    --color-success-bg: rgba(56, 161, 105, 0.10);
+    --color-warning: #b8722a;
+    --color-overlay: rgba(0, 0, 0, 0.4);
+    --color-shadow: rgba(0, 0, 0, 0.18);
+
+    /* Typography */
+    --font-ui: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+
+    /* Shape */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --control-height: 2.25rem;
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --color-bg: #0f0f0f;
-        --color-surface: rgba(255, 255, 255, 0.05);
-        --color-border: rgba(255, 255, 255, 0.10);
-        --color-border-focus: rgba(255, 255, 255, 0.30);
-        --color-text: #f7f7f5;
-        --color-muted: #8a8a86;
-        --color-hover-bg: rgba(255, 255, 255, 0.08);
-        --color-red: #fc8181;
-        --color-green: #68d391;
-        --color-yellow: #c8893a;
-        --color-tag-bg: rgba(255, 255, 255, 0.08);
-        --color-tag-text: #f7f7f5;
-        --color-msg-user-bg: #2d4a38;
-        --color-msg-user-text: #d4eddd;
-        --color-msg-assistant-bg: rgba(255, 255, 255, 0.11);
-        --color-msg-assistant-text: #e5e7eb;
-        --color-msg-assistant-border: rgba(255, 255, 255, 0.16);
-        --color-send-bg: #3d8a6e;
-        --color-send-hover: #2f6d57;
-        --color-file-accent: #6b6b68;
-        --color-file-accent-bg: rgba(255, 255, 255, 0.08);
-        --color-remove-hover-bg: rgba(252, 129, 129, 0.12);
-        --color-modal-overlay: rgba(0, 0, 0, 0.6);
-        --color-shadow-modal: rgba(0, 0, 0, 0.3);
-    }
+:root[data-theme="dark"] {
+    color-scheme: dark;
+
+    --color-bg: #181a1f;
+    --color-surface: #23262d;
+    --color-border: #353a44;
+    --color-border-focus: #75a7ff;
+    --color-text: #f4f6f8;
+    --color-muted: #a7afba;
+    --color-hover-bg: #2d333d;
+    --color-tag-bg: rgba(255, 255, 255, 0.08);
+    --color-inverse-bg: #f7f7f5;
+    --color-inverse-text: #0f0f0f;
+    --color-primary: #4c8dff;
+    --color-primary-hover: #70a5ff;
+    --color-primary-text: #0f0f0f;
+    --color-danger: #fc8181;
+    --color-danger-hover: #feb2b2;
+    --color-danger-bg: rgba(252, 129, 129, 0.12);
+    --color-success: #68d391;
+    --color-success-bg: rgba(104, 211, 145, 0.12);
+    --color-warning: #c8893a;
+    --color-overlay: rgba(0, 0, 0, 0.6);
+    --color-shadow: rgba(0, 0, 0, 0.3);
 }
 
-/*  BASE  */
+/* BASE */
+
 [x-cloak] {
     display: none !important;
 }
 
-* {
-    box-sizing: border-box;
+/* Paint the canvas with the theme background even while <body> is x-cloak'd */
+html {
+    background-color: var(--color-bg);
+}
+
+body {
+    font-family: var(--font-ui);
+    font-size: 14px;
+    color: var(--color-text);
+    background-color: var(--color-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
+:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: 2px;
+}
+
+::selection {
+    background-color: var(--color-inverse-bg);
+    color: var(--color-inverse-text);
+}
+
+input[type="radio"],
+input[type="checkbox"] {
+    accent-color: var(--color-primary);
+}
+
+/* TEXT */
+
+.app-title {
+    font-size: 1.125rem;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+}
+
+.text-muted {
+    color: var(--color-muted);
+}
+
+.text-danger {
+    color: var(--color-danger);
+}
+
+.text-success {
+    color: var(--color-success);
+}
+
+.text-warning {
+    color: var(--color-warning);
+}
+
+/* LANGUAGE / THEME CONTROLS */
+
+.global-preferences {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+}
+
+.pref-btn {
+    width: var(--control-height);
+    height: var(--control-height);
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.pref-btn:hover {
+    background-color: var(--color-hover-bg);
+    color: var(--color-text);
+}
+
+.pref-btn-lang {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* CARD / LABEL / DIVIDER / LINK */
+
+.card {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+}
+
+.label {
+    display: block;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-muted);
+}
+
+.divider {
+    border-top: 1px solid var(--color-border);
+}
+
+.footer-link {
+    color: var(--color-muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.15s;
+}
+
+.footer-link:hover {
+    color: var(--color-text);
+}
+
+/* FORM FIELDS */
+
+.field,
+.field-input,
+.field-select,
+.field-textarea {
+    width: 100%;
+    height: var(--control-height);
+    padding: 0 0.75rem;
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.field:focus,
+.field-input:focus,
+.field-select:focus,
+.field-textarea:focus {
+    border-color: var(--color-border-focus);
+}
+
+.field::placeholder,
+.field-input::placeholder,
+.field-textarea::placeholder {
+    color: var(--color-muted);
+    opacity: 0.7;
+}
+
+.field:disabled,
+.field-input:disabled,
+.field-select:disabled,
+.field-textarea:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+textarea.field,
+.field-textarea {
+    display: block;
+    height: auto;
+    min-height: 4.5rem;
+    padding: 0.5rem 0.75rem;
+    line-height: 1.6;
+}
+
+.field-select {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 2rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b6b68' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+}
+
+.field-select option {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+}
+
+/* BUTTONS */
+
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: var(--control-height);
+    padding: 0 0.75rem;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ui);
+    font-size: 14px;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, transform 0.15s;
+}
+
+.btn-primary {
+    padding: 0 1rem;
+    font-weight: 500;
+    background-color: var(--color-primary);
+    color: var(--color-primary-text);
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+    background-color: transparent;
+    color: var(--color-muted);
+    border-color: var(--color-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-hover-bg);
+    color: var(--color-text);
+}
+
+.btn-danger {
+    background-color: transparent;
+    color: var(--color-danger);
+    border-color: var(--color-border);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: var(--color-danger-bg);
+}
+
+.btn-primary:active:not(:disabled),
+.btn-secondary:active:not(:disabled),
+.btn-danger:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.btn-primary:disabled,
+.btn-secondary:disabled,
+.btn-danger:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.btn-sm {
+    height: 1.75rem;
+    padding: 0 0.5rem;
+    gap: 0.35rem;
+    font-size: 12px;
+}
+
+/* ==========================================================================
+   END OF SHARED DESIGN SYSTEM
+   ========================================================================== */
+
+/* ==========================================================================
+   APP-SPECIFIC: local-chat
+   ========================================================================== */
+
+:root {
+    /* Chat bubbles */
+    --color-msg-user-bg: #e8f0fb;
+    --color-msg-user-text: #1f3d5c;
+    --color-msg-assistant-bg: #eaece9;
+    --color-msg-assistant-text: #1f2937;
+    --color-msg-assistant-border: rgba(0, 0, 0, 0.12);
+
+    /* Solid destructive button (stop generation) */
+    --color-danger-solid: #c53030;
+    --color-danger-solid-hover: #9b2c2c;
+    --color-danger-solid-text: #ffffff;
+}
+
+:root[data-theme="dark"] {
+    --color-msg-user-bg: #263449;
+    --color-msg-user-text: #d9e7fb;
+    --color-msg-assistant-bg: #2a2e36;
+    --color-msg-assistant-text: #e5e7eb;
+    --color-msg-assistant-border: #353a44;
 }
 
 html,
@@ -75,13 +373,55 @@ body {
 }
 
 body {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    background-color: var(--color-bg);
-    color: var(--color-text);
     overflow: hidden;
     display: flex;
     flex-direction: column;
+}
+
+.field-textarea {
+    resize: none;
+}
+
+/* Ghost button with success color (start Ollama) */
+.btn-success {
+    color: var(--color-success);
+}
+
+.btn-success:hover:not(:disabled) {
+    color: var(--color-success);
+}
+
+/* Solid destructive button (stop generation) */
+.btn-danger-solid {
+    background-color: var(--color-danger-solid);
+    color: var(--color-danger-solid-text);
+    border-color: transparent;
+}
+
+.btn-danger-solid:hover:not(:disabled) {
+    background-color: var(--color-danger-solid-hover);
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+}
+
+.prompt-hint {
+    color: var(--color-muted);
+    font-size: 0.625rem;
+    opacity: 0.7;
+}
+
+.footer {
+    display: flex;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0.35rem 0.75rem;
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
 }
 
 .app-wrapper {
@@ -93,11 +433,6 @@ body {
     max-width: 64rem;
     width: 100%;
     margin: 0 auto;
-}
-
-/* TEXT */
-.text-warning {
-    color: var(--color-yellow);
 }
 
 /*  CARD  */
@@ -125,60 +460,18 @@ body {
     margin-top: 0.25rem;
 }
 
-
-.label {
-    display: block;
-    font-size: 0.625rem;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--color-muted);
-}
-
-/*  FIELDS  */
-.field-textarea,
-.field-select {
-    width: 100%;
-    background-color: var(--color-surface);
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    outline: none;
-}
-
-.field-textarea:focus,
-.field-select:focus {
-    border-color: var(--color-border-focus);
-}
-
-.field-textarea::placeholder {
-    color: var(--color-muted);
-    opacity: 0.7;
-}
-
-.field-textarea:disabled,
-.field-select:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.field-textarea {
-    resize: none;
-    line-height: 1.6;
-}
-
-.field-select option {
-    background-color: var(--color-bg);
-    color: var(--color-text);
-}
-
 /*  CHAT MESSAGES  */
+.message-bubble {
+    max-width: 75%;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+}
+
 .message-user {
     background-color: var(--color-msg-user-bg);
     color: var(--color-msg-user-text);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.6;
 }
@@ -187,7 +480,7 @@ body {
     background-color: var(--color-msg-assistant-bg);
     color: var(--color-msg-assistant-text);
     border-color: var(--color-msg-assistant-border) !important;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     font-size: 13px;
     line-height: 1.6;
 }
@@ -214,131 +507,6 @@ body {
     border-radius: 2px;
 }
 
-/*  BUTTONS  */
-.btn-send,
-.btn-load-models,
-.btn-start-ollama,
-.btn-stop-ollama {
-    border-radius: 0.5rem;
-    font-family: 'JetBrains Mono', monospace;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-}
-
-.btn-send:disabled,
-.btn-load-models:disabled,
-.btn-start-ollama:disabled,
-.btn-stop-ollama:disabled,
-.btn-stop-chat:disabled {
-    cursor: not-allowed;
-}
-
-/* Primary */
-.btn-send {
-    background-color: var(--color-send-bg);
-    color: #ffffff;
-    border: none;
-    height: 2.25rem;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 0 1rem;
-}
-
-.btn-send:hover {
-    background-color: var(--color-send-hover);
-}
-
-/* Load Models */
-.btn-load-models {
-    background-color: transparent;
-    color: var(--color-muted);
-    border: 1px solid var(--color-border);
-    height: 2.25rem;
-    font-size: 13px;
-    padding: 0 0.75rem;
-}
-
-.btn-load-models:hover:not(:disabled) {
-    background-color: var(--color-hover-bg);
-}
-
-/* Start Ollama */
-.btn-start-ollama {
-    background-color: transparent;
-    color: var(--color-green);
-    border: 1px solid var(--color-border);
-    height: 2.25rem;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 0 0.75rem;
-}
-
-.btn-start-ollama:hover:not(:disabled) {
-    background-color: var(--color-hover-bg);
-}
-
-/* Stop Ollama */
-.btn-stop-ollama {
-    background-color: transparent;
-    color: var(--color-red);
-    border: 1px solid var(--color-border);
-    height: 2.25rem;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 0 0.75rem;
-}
-
-.btn-stop-ollama:hover:not(:disabled) {
-    background-color: var(--color-hover-bg);
-}
-
-/* Stop chat */
-.btn-stop-chat {
-    background-color: var(--color-red);
-    color: #ffffff;
-    border: none;
-    border-radius: 0.5rem;
-    height: 2.25rem;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 0 1rem;
-    font-family: 'JetBrains Mono', monospace;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    white-space: nowrap;
-}
-
-.btn-stop-chat:hover {
-    filter: brightness(0.88);
-}
-
-/* New chat */
-.btn-new-chat {
-    background-color: transparent;
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
-    border-radius: 0.5rem;
-    height: 2.25rem;
-    font-size: 13px;
-    font-weight: 500;
-    padding: 0 1rem;
-    font-family: 'JetBrains Mono', monospace;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    white-space: nowrap;
-}
-
-.btn-new-chat:hover {
-    background-color: var(--color-hover-bg);
-}
-
 /*  ALERT ERROR  */
 .alert-error {
     display: flex;
@@ -348,9 +516,9 @@ body {
     border-radius: 0.5rem;
     font-size: 0.75rem;
     line-height: 1.625;
-    color: var(--color-red);
+    color: var(--color-danger);
     background-color: transparent;
-    border: 1px solid var(--color-red);
+    border: 1px solid var(--color-danger);
 }
 
 /*  STATUS DOT  */
@@ -363,17 +531,17 @@ body {
 }
 
 .status-dot.online {
-    background-color: var(--color-green);
-    box-shadow: 0 0 6px var(--color-green);
+    background-color: var(--color-success);
+    box-shadow: 0 0 6px var(--color-success);
 }
 
 .status-dot.offline {
-    background-color: var(--color-red);
-    box-shadow: 0 0 6px var(--color-red);
+    background-color: var(--color-danger);
+    box-shadow: 0 0 6px var(--color-danger);
 }
 
 .status-dot.loading {
-    background-color: var(--color-yellow);
+    background-color: var(--color-warning);
     animation: pulse 1s ease-in-out infinite;
 }
 
@@ -381,21 +549,10 @@ body {
 .tag {
     display: inline-block;
     background-color: var(--color-tag-bg);
-    color: var(--color-tag-text);
+    color: var(--color-text);
     border-radius: 0.25rem;
     padding: 1px 7px;
     font-size: 11px;
-}
-
-/*  FOOTER LINK  */
-.footer-link {
-    color: var(--color-muted);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-.footer-link:hover {
-    opacity: 1;
 }
 
 /* ICON RAIL */
@@ -510,7 +667,7 @@ body {
 }
 
 .session-action-btn-delete:hover {
-    color: var(--color-red);
+    color: var(--color-danger);
 }
 
 /* MODAL */
@@ -518,7 +675,7 @@ body {
 .modal-overlay {
     position: fixed;
     inset: 0;
-    background-color: var(--color-modal-overlay);
+    background-color: var(--color-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -534,7 +691,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    box-shadow: 0 8px 32px var(--color-shadow-modal);
+    box-shadow: 0 8px 32px var(--color-shadow);
 }
 
 .modal-title {
@@ -544,61 +701,10 @@ body {
     margin: 0;
 }
 
-.modal-input {
-    width: 100%;
-    background-color: var(--color-bg);
-    color: var(--color-text);
-    border: 1px solid var(--color-border-focus);
-    border-radius: 0.5rem;
-    padding: 0.5rem 0.75rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 13px;
-    outline: none;
-}
-
-.modal-input:focus {
-    border-color: var(--color-send-bg);
-}
-
 .modal-actions {
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
-}
-
-.btn-modal-cancel {
-    background-color: transparent;
-    color: var(--color-text);
-    border: 1px solid var(--color-border);
-    border-radius: 0.5rem;
-    height: 2rem;
-    padding: 0 1rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    cursor: pointer;
-    transition: background-color 0.15s;
-}
-
-.btn-modal-cancel:hover {
-    background-color: var(--color-hover-bg);
-}
-
-.btn-modal-save {
-    background-color: var(--color-send-bg);
-    color: #ffffff;
-    border: none;
-    border-radius: 0.5rem;
-    height: 2rem;
-    padding: 0 1rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.15s;
-}
-
-.btn-modal-save:hover {
-    background-color: var(--color-send-hover);
 }
 
 .session-empty {
@@ -648,7 +754,7 @@ body {
     gap: 8px;
     padding: 6px 10px;
     border-radius: 8px;
-    background: var(--color-file-accent-bg);
+    background: var(--color-tag-bg);
     border: 1px solid var(--color-border);
     font-size: 12px;
     color: var(--color-muted);
@@ -683,34 +789,8 @@ body {
 }
 
 .btn-remove-file:hover {
-    color: var(--color-red);
-    background: var(--color-remove-hover-bg);
-}
-
-.btn-attach-file {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 11px;
-    color: var(--color-muted);
-    background: transparent;
-    border: 1px solid var(--color-border);
-    cursor: pointer;
-    transition: color 0.15s, border-color 0.15s, background 0.15s;
-    white-space: nowrap;
-}
-
-.btn-attach-file:hover:not(:disabled) {
-    color: var(--color-text);
-    border-color: var(--color-border-focus);
-    background: var(--color-hover-bg);
-}
-
-.btn-attach-file:disabled {
-    opacity: 0.35;
-    cursor: not-allowed;
+    color: var(--color-danger);
+    background: var(--color-danger-bg);
 }
 
 /* badge on sidebar sessions that have a file context */

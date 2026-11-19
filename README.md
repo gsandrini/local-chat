@@ -14,12 +14,6 @@ Main application interface.
 
 ![image](./assets/screenshot/local-chat.png)
 
-### Ollama managed by Systemd
-
-Ollama startup and lifecycle managed by the system service.
-
-![image](./assets/screenshot/local-chat-ollama-managed-by-systemd.png)
-
 ---
 
 ## Features
@@ -96,13 +90,13 @@ curl -fsSL https://github.com/gsandrini/local-chat/releases/latest/download/inst
 - [SQLite](https://www.sqlite.org) - Embedded database ([go-sqlite3](https://github.com/mattn/go-sqlite3))
 - [Alpine.js](https://alpinejs.dev) - Reactive UI (bundled locally)
 - [Tailwind CSS](https://tailwindcss.com) - Styling (compiled locally)
-- [JetBrains Mono](https://www.jetbrains.com/lp/mono/) - Typography
+- [Google Fonts](https://fonts.google.com) - Inter and JetBrains Mono typography (loaded from CDN)
 
 ---
 
 ## Built with
 
-This project was built with the support of [Claude](https://claude.ai) by Anthropic.
+This project was built with the support of AI.
 
 ---
 

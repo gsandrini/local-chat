@@ -1,5 +1,8 @@
 'use strict';
 
+const PREF_KEYS = { language: 'language', theme: 'theme' };
+const THEME_COLORS = { light: '#f7f7f4', dark: '#181a1f' };
+
 /*  TRANSLATIONS  */
 const TRANSLATIONS = {
     it: {
@@ -18,8 +21,7 @@ const TRANSLATIONS = {
         btnSend: 'Invia',
         btnSending: 'Generazione in corso...',
         btnStopChat: 'Stop',
-        footerMadeWith: 'Sviluppata con il supporto di',
-        footerBy: '(Anthropic)',
+        madeWith: 'Developed with AI assistance',
         ollamaIsSystemd: 'Ollama è gestito da systemd — usa il terminale per avviarlo/fermarlo',
         newChat: 'Nuova chat',
         noSessions: 'Nessuna chat salvata',
@@ -33,7 +35,10 @@ const TRANSLATIONS = {
         btnSave: 'Salva',
         attachFile: 'Allega file di contesto (.txt, .md)',
         removeFile: 'Rimuovi file di contesto',
-        fileContext: 'Contesto attivo',
+        switchToItalian: 'Passa a italiano',
+        switchToEnglish: 'Passa a inglese',
+        activateLightTheme: 'Attiva tema chiaro',
+        activateDarkTheme: 'Attiva tema scuro',
     },
     en: {
         appTitle: 'LocalChat',
@@ -51,8 +56,7 @@ const TRANSLATIONS = {
         btnSend: 'Send',
         btnSending: 'Generating...',
         btnStopChat: 'Stop',
-        footerMadeWith: 'Built with the support of',
-        footerBy: '(Anthropic)',
+        madeWith: 'Developed with AI assistance',
         ollamaIsSystemd: 'Ollama is managed by systemd — stop/start from terminal',
         newChat: 'New chat',
         noSessions: 'No saved chats',
@@ -66,7 +70,10 @@ const TRANSLATIONS = {
         btnSave: 'Save',
         attachFile: 'Attach context file (.txt, .md)',
         removeFile: 'Remove context file',
-        fileContext: 'Active context',
+        switchToItalian: 'Switch to Italian',
+        switchToEnglish: 'Switch to English',
+        activateLightTheme: 'Activate light theme',
+        activateDarkTheme: 'Activate dark theme',
     },
 };
 
@@ -93,11 +100,44 @@ function LocalChat() {
         sidebarOpen: true,
         renameModal: { open: false, id: null, title: '' },
 
-        // i18n
-        lang: navigator.language.startsWith('it') ? 'it' : 'en',
+        // theme and i18n
+        lang: document.documentElement.lang === 'it' ? 'it' : 'en',
+        theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light',
         get t() { return TRANSLATIONS[this.lang]; },
 
+        setLanguage(nextLanguage) {
+            if (!Object.prototype.hasOwnProperty.call(TRANSLATIONS, nextLanguage)) return;
+            this.lang = nextLanguage;
+            document.documentElement.lang = nextLanguage;
+            try { localStorage.setItem(PREF_KEYS.language, nextLanguage); } catch (_) {}
+            this.syncBackendLanguage();
+        },
+
+        // Backend messages (errors, dialogs) follow the UI language
+        syncBackendLanguage() {
+            window.go?.main?.App?.SetLanguage(this.lang);
+        },
+
+        toggleLang() {
+            this.setLanguage(this.lang === 'it' ? 'en' : 'it');
+        },
+
+        setTheme(nextTheme) {
+            if (nextTheme !== 'light' && nextTheme !== 'dark') return;
+            this.theme = nextTheme;
+            document.documentElement.dataset.theme = nextTheme;
+            document.querySelector('meta[name="theme-color"]').content = THEME_COLORS[nextTheme];
+            try { localStorage.setItem(PREF_KEYS.theme, nextTheme); } catch (_) {}
+        },
+
+        toggleTheme() {
+            this.setTheme(this.theme === 'dark' ? 'light' : 'dark');
+        },
+
         async init() {
+            // lang/theme were already applied by the inline script in index.html;
+            // don't persist them here, so an unset preference keeps following the system
+            this.syncBackendLanguage();
             await this.checkStatus();
 
             if (window.runtime) {
