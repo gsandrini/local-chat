@@ -22,7 +22,7 @@ const TRANSLATIONS = {
         btnSending: 'Generazione in corso...',
         btnStopChat: 'Stop',
         madeWith: 'Developed with AI assistance',
-        ollamaIsSystemd: 'Ollama è gestito da systemd — usa il terminale per avviarlo/fermarlo',
+        ollamaStartFromTerminal: 'Avvia Ollama dal terminale:',
         newChat: 'Nuova chat',
         noSessions: 'Nessuna chat salvata',
         sidebarTitle: 'Chats',
@@ -57,7 +57,7 @@ const TRANSLATIONS = {
         btnSending: 'Generating...',
         btnStopChat: 'Stop',
         madeWith: 'Developed with AI assistance',
-        ollamaIsSystemd: 'Ollama is managed by systemd — stop/start from terminal',
+        ollamaStartFromTerminal: 'Start Ollama from terminal:',
         newChat: 'New chat',
         noSessions: 'No saved chats',
         sidebarTitle: 'Chats',
@@ -87,6 +87,8 @@ function LocalChat() {
         error: null,
         ollamaOnline: false,
         ollamaIsSystemd: false,
+        ollamaHasSystemdUnit: false,
+        statusChecking: false,
         ollamaLoading: false,
         ollamaModelLoading: false,
         history: [],
@@ -140,6 +142,11 @@ function LocalChat() {
             this.syncBackendLanguage();
             await this.checkStatus();
 
+            // No polling: while Ollama is offline, re-check once when the user comes back to the window
+            const recheck = () => { if (!this.ollamaOnline && !this.ollamaLoading) this.checkStatus(); };
+            window.addEventListener('focus', recheck);
+            document.addEventListener('visibilitychange', () => { if (!document.hidden) recheck(); });
+
             if (window.runtime) {
                 window.runtime.EventsOff('chat:token');
                 window.runtime.EventsOff('chat:done');
@@ -181,9 +188,16 @@ function LocalChat() {
             if (!window.go?.main?.App) {
                 return;
             }
-            this.ollamaIsSystemd = await window.go.main.App.OllamaIsSystemd();
-            this.ollamaOnline = await window.go.main.App.OllamaStatus();
-            if (this.ollamaOnline) await this.loadModels();
+            if (this.statusChecking) return;
+            this.statusChecking = true;
+            try {
+                this.ollamaIsSystemd = await window.go.main.App.OllamaIsSystemd();
+                this.ollamaHasSystemdUnit = await window.go.main.App.OllamaHasSystemdUnit();
+                this.ollamaOnline = await window.go.main.App.OllamaStatus();
+                if (this.ollamaOnline) await this.loadModels();
+            } finally {
+                this.statusChecking = false;
+            }
         },
 
         async loadModels() {
@@ -376,6 +390,14 @@ function LocalChat() {
             } finally {
                 this.closeRenameModal();
             }
+        },
+
+        formatSessionDate(iso) {
+            const d = new Date(iso);
+            if (isNaN(d)) return '';
+            return d.toLocaleString(this.lang === 'it' ? 'it-IT' : 'en-GB', {
+                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit',
+            });
         },
 
         handleKeydown(event) {

@@ -16,8 +16,10 @@ func main() {
 
 	err := wails.Run(&options.App{
 		Title:  "Local Chat",
-		Width:  700,
-		Height: 520,
+		Width:     1100,
+		Height:    720,
+		MinWidth:  700,
+		MinHeight: 520,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},

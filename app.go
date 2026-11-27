@@ -166,6 +166,21 @@ func (a *App) OllamaIsSystemd() bool {
     return strings.TrimSpace(string(out)) == "active"
 }
 
+// OllamaHasSystemdUnit reports whether an ollama systemd service is installed,
+// whether it is running or not. When it is, Ollama should be started from the
+// terminal (sudo systemctl start ollama) instead of spawning a separate process
+// that would not use the service's model store.
+func (a *App) OllamaHasSystemdUnit() bool {
+	if runtime.GOOS == "windows" || runtime.GOOS == "darwin" {
+		return false
+	}
+	out, err := exec.Command("systemctl", "show", "ollama", "-p", "LoadState", "--value").Output()
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(out)) == "loaded"
+}
+
 // OllamaStart starts `ollama serve` as a background process
 func (a *App) OllamaStart() ChatResult {
 	if a.OllamaStatus() {
